@@ -1,0 +1,68 @@
+service: gptll-polly-microservice
+frameworkVersion: "3"
+
+custom:
+  stage: ${opt:stage, 'dev'}
+  bucketName: ${self:service}-${self:custom.stage}-audio-files
+  apiKey: ${env:API_KEY}
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${self:custom.stage}
+  region: ap-southeast-2
+  memorySize: 256
+  timeout: 10
+  environment:
+    BUCKET_NAME: ${self:custom.bucketName}
+  apiKeys:
+    - name: ${self:custom.stage}-apiKey
+      value: ${self:custom.apiKey}
+  usagePlan:
+    quota:
+      limit: 100
+      period: DAY
+    throttle:
+      burstLimit: 50
+      rateLimit: 100
+
+functions:
+  processData:
+    handler: createAudio.handler
+    events:
+      - httpApi:
+          path: /process
+          method: post
+          authorizer: NONE
+          apiKeyRequired: true
+    tags:
+      service: gptll-polly-microservice
+    iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:PutObject"
+            - "s3:PutObjectAcl"
+          Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
+resources:
+  Resources:
+    AudioFilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        AccessControl: PublicRead
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - "*"
+              AllowedMethods:
+                - GET
+                - HEAD
+              AllowedHeaders:
+                - "*"
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-dotenv-plugin
