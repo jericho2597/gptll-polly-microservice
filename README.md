@@ -1,6 +1,6 @@
 <!--
-title: 'AWS Simple HTTP Endpoint example in NodeJS'
-description: 'This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.'
+title: 'AWS Serverless Polly-S3 Japanese Text to Speech Microservice in Node.js'
+description: 'This project demonstrates how to create a serverless microservice using AWS Lambda, Amazon Polly, and Amazon S3 with the Serverless Framework.'
 layout: Doc
 framework: v3
 platform: AWS
@@ -10,13 +10,46 @@ authorName: 'Serverless, inc.'
 authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
 -->
 
-# Serverless Framework Node HTTP API on AWS
+# GPTLL Polly Microservice
 
-This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.
+This project provides a Serverless microservice that processes text content and generates audio files using Amazon Polly. The generated audio files are stored in an Amazon S3 bucket and can be publicly accessed.
 
-This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes Typescript, Mongo, DynamoDB and other examples.
+The microservice is built using the Serverless Framework and AWS Lambda. The Lambda function is triggered by an HTTP POST request and accepts two parameters in the request body: a name string and a content string. The content string is converted to speech using Amazon Polly with a Japanese voice (either Mizuki or Takumi), and the generated audio file is stored in the S3 bucket using the name parameter as the file name.
 
-## Usage
+### Prerequisites
+
+- Node.js v14.x or higher
+- NPM (included with Node.js)
+- An AWS account with appropriate permissions to create Lambda functions, API Gateway, and S3 resources
+- The Serverless Framework CLI installed globally (npm install -g serverless)
+
+### Installation
+
+Clone this repository:
+
+```
+git clone <repository-url>
+```
+
+Change into the project directory:
+
+```
+cd gptll-polly-microservice
+```
+
+Install the required dependencies:
+
+```
+npm install
+```
+
+### Configuration
+
+Create a .env file in the root of the project and add the required environment variables (e.g., API key):
+
+```
+API_KEY=my_generated_api_key
+```
 
 ### Deployment
 
@@ -24,21 +57,11 @@ This template does not include any kind of persistence (database). For more adva
 $ serverless deploy
 ```
 
-After deploying, you should see output similar to:
+The Serverless Framework will package and deploy your Lambda function, create an API Gateway, and set up the necessary permissions.
 
-```bash
-Deploying aws-node-http-api-project to stage dev (us-east-1)
+After deployment, you will receive an endpoint URL that you can use to trigger the Lambda function. Make sure to include the API key in the ApiKey header when making requests.
 
-✔ Service deployed to stack aws-node-http-api-project-dev (152s)
-
-endpoint: GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
-functions:
-  hello: aws-node-http-api-project-dev-hello (1.9 kB)
-```
-
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [http event docs](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/).
-
-### Invocation
+### Usage
 
 After successful deployment, you can call the created application via HTTP:
 
@@ -46,47 +69,17 @@ After successful deployment, you can call the created application via HTTP:
 curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
 ```
 
-Which should result in response similar to the following (removed `input` content for brevity):
+To use the microservice, send an HTTP POST request to the endpoint URL with the following JSON body:
 
 ```json
 {
-  "message": "Go Serverless v2.0! Your function executed successfully!",
-  "input": {
-    ...
-  }
+  "name": "example",
+  "content": "こんにちは、世界！"
 }
 ```
 
-### Local development
+The Lambda function will process the content, generate an audio file using Amazon Polly, and store the file in the S3 bucket. The resulting audio file will be publicly accessible.
 
-You can invoke your function locally by using the following command:
+### Security
 
-```bash
-serverless invoke local --function hello
-```
-
-Which should result in response similar to the following:
-
-```
-{
-  "statusCode": 200,
-  "body": "{\n  \"message\": \"Go Serverless v3.0! Your function executed successfully!\",\n  \"input\": \"\"\n}"
-}
-```
-
-
-Alternatively, it is also possible to emulate API Gateway and Lambda locally by using `serverless-offline` plugin. In order to do that, execute the following command:
-
-```bash
-serverless plugin install -n serverless-offline
-```
-
-It will add the `serverless-offline` plugin to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`.
-
-After installation, you can start local emulation with:
-
-```
-serverless offline
-```
-
-To learn more about the capabilities of `serverless-offline`, please refer to its [GitHub repository](https://github.com/dherault/serverless-offline).
+The microservice is protected by an API key. To access the microservice, you need to include the API key in the ApiKey header of your HTTP requests. Unauthorized requests will be denied.
